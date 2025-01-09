@@ -45,3 +45,38 @@ describe('Blog app', () => {
     })
   })
 })
+
+
+describe('When logged in', () => {
+  beforeEach(async ({ page, request }) => {
+    // Nollataan tietokanta ja luodaan testikäyttäjä
+    await request.post('http://localhost:3003/api/testing/reset')
+    await request.post('http://localhost:3003/api/users', {
+      data: {
+        name: 'Test User',
+        username: 'testuser',
+        password: 'salasana',
+      },
+    })
+
+    // Kirjautuminen
+    await page.goto('http://localhost:5173')
+    await page.getByRole('textbox', { name: 'username'  }).fill('testuser')
+    await page.getByRole('textbox', { name: 'password' }).fill('salasana')
+    await page.getByRole('button', { name: /login/i }).click()
+  })
+
+  test('a new blog can be created', async ({ page }) => {
+    // Klikataan "Create new blog" -painiketta
+    await page.getByRole('button', { name: /create new blog/i }).click()
+
+    // Täytetään lomake ja luodaan blogi
+    await page.getByRole('textbox', { name: 'Title'}).fill('Playwright Blog')
+    await page.getByRole('textbox', { name: 'Author'}).fill('Test Author')
+    await page.getByRole('textbox', { name: 'URL'}).fill('http://example.com')
+    await page.getByRole('button', { name: /save/i }).click()
+
+    // Tarkistetaan, että blogi ilmestyy blogilistaan
+    await expect(page.getByText('Playwright Blog Test Author')).toBeVisible()
+  })
+})
